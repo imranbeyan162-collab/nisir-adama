@@ -1,0 +1,92 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model RegistrationGroup {
+  id                String   @id @default(uuid())
+  registrationCode  String   @unique // e.g. NISIR-2026-8491
+  parentName        String
+  parentPhone       String
+  parentEmail       String?
+  paymentMethod     String   // CBE, TELEBIRR
+  transactionNumber String
+  receiptUrl        String?  // Base64 or uploaded file path
+  totalRegFee       Float    @default(0.0)
+  totalMonthlyFee   Float    @default(0.0)
+  status            String   @default("PENDING") // PENDING, VERIFIED, REJECTED
+  adminNotes        String?
+  submittedAt       DateTime @default(now())
+  verifiedAt        DateTime?
+  players           Player[]
+}
+
+model Player {
+  id                  String            @id @default(uuid())
+  registrationGroupId String
+  registrationGroup   RegistrationGroup @relation(fields: [registrationGroupId], references: [id], onDelete: Cascade)
+  fullName            String
+  birthDate           String
+  playerPhone         String?
+  playerPhotoUrl      String?
+  fatherName          String
+  motherName          String
+  guardianPhone       String
+  position            String            // Goalkeeper, Defender, Midfielder, Forward
+  ageCategory         String            // U10, U13, U15, 17
+  regFee              Float
+  monthlyFee          Float             @default(500.0)
+  parentConsent       Boolean           @default(true)
+  createdAt           DateTime          @default(now())
+}
+
+model GalleryItem {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  mediaType   String   @default("photo") // photo, video
+  mediaUrl    String
+  videoUrl    String?
+  thumbnail   String?
+  category    String   @default("Match") // Training, Match, COVID-Era, Celebration, Coach
+  featured    Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PageMedia {
+  id          String   @id @default(uuid())
+  sectionKey  String   @unique // e.g. home_hero, about_covid_1, coach_intro_video, why_join_testimonial_1
+  page        String   // home, about, why_join, coach, rules, gallery
+  title       String
+  subtitle    String?
+  mediaType   String   @default("photo") // photo, video, embed
+  mediaUrl    String
+  embedUrl    String?
+  thumbnail   String?
+  caption     String?
+  updatedAt   DateTime @updatedAt
+}
+
+model SiteSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  group     String   @default("general") // general, contact, payment, branding
+  updatedAt DateTime @updatedAt
+}
+
+model AdminUser {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String
+  fullName     String
+  role         String   @default("COACH") // COACH, STAFF, ADMIN
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
