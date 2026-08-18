@@ -21,53 +21,20 @@ export default function GalleryPage() {
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'PHOTO' | 'VIDEO' | 'MATCH' | 'TRAINING' | 'COVID'>('ALL');
   const [selectedMedia, setSelectedMedia] = useState<any | null>(null);
 
-  const DUMMY_TITLES = [
-    'Manafesha Meda Championship Match',
-    'Chapi Stadium Championship Match',
-    'Morning Training at Manafesha Meda',
-    'Tactical Ball Mastery Drills',
-    'COVID-Era Distance Training (2013 E.C.)',
-    'Annual Trophy Presentation Ceremony',
-    'Coach Fisha Strategy Briefing',
-    'Youth Striker Shooting Practice',
-  ];
-
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const localDeleted = JSON.parse(localStorage.getItem('nisir_deleted_ids') || '[]');
-      const localItems = JSON.parse(localStorage.getItem('nisir_gallery_store') || '[]');
-      const deletedSet = new Set(localDeleted);
-      if (localItems.length > 0) {
-        setItems(
-          localItems.filter((i: any) => !deletedSet.has(i.id) && !DUMMY_TITLES.includes(i.title) && i.id !== 'init_item_1' && i.id !== 'init_item_2')
-        );
-        setLoading(false);
-      }
-    }
     fetchGallery();
   }, []);
 
   const fetchGallery = async () => {
     try {
-      const localDeleted = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('nisir_deleted_ids') || '[]') : [];
-      const localItems = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('nisir_gallery_store') || '[]') : [];
-      const deletedSet = new Set(localDeleted);
-
+      setLoading(true);
       const res = await fetch('/api/admin/gallery?type=ALL', { cache: 'no-store' });
       const data = await res.json();
       if (data?.items) {
-        const serverItems = data.items.filter(
-          (i: any) => !deletedSet.has(i.id) && !DUMMY_TITLES.includes(i.title) && i.id !== 'init_item_1' && i.id !== 'init_item_2'
-        );
-        setItems(serverItems);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('nisir_gallery_store', JSON.stringify(serverItems));
-        }
+        setItems(data.items);
       }
     } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+      console.error('Fetch gallery error:', err);
     }
   };
 

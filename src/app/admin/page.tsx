@@ -232,72 +232,25 @@ export default function AdminPage() {
     }
   };
 
-  const DUMMY_TITLES = [
-    'Manafesha Meda Championship Match',
-    'Chapi Stadium Championship Match',
-    'Morning Training at Manafesha Meda',
-    'Tactical Ball Mastery Drills',
-    'COVID-Era Distance Training (2013 E.C.)',
-    'Annual Trophy Presentation Ceremony',
-    'Coach Fisha Strategy Briefing',
-    'Youth Striker Shooting Practice',
-  ];
-
-  // Fetch Gallery Items with dual client-server persistence
+  // Fetch Gallery Items directly from Cloud
   const fetchGallery = async () => {
-    // 1. Instant load from localStorage
-    if (typeof window !== 'undefined') {
-      const localDeleted = JSON.parse(localStorage.getItem('nisir_deleted_ids') || '[]');
-      const localItems = JSON.parse(localStorage.getItem('nisir_gallery_store') || '[]');
-      const deletedSet = new Set(localDeleted);
-      if (localItems.length > 0) {
-        setGalleryItems(
-          localItems.filter((i: any) => !deletedSet.has(i.id) && !DUMMY_TITLES.includes(i.title) && i.id !== 'init_item_1' && i.id !== 'init_item_2')
-        );
-      }
-    }
-
     try {
-      const localDeleted = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('nisir_deleted_ids') || '[]') : [];
-      const localItems = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('nisir_gallery_store') || '[]') : [];
-      const deletedSet = new Set(localDeleted);
-
       const res = await fetch('/api/admin/gallery?type=ALL', { cache: 'no-store' });
       const data = await res.json();
       if (data?.items) {
-        const serverItems = data.items.filter(
-          (i: any) => !deletedSet.has(i.id) && !DUMMY_TITLES.includes(i.title) && i.id !== 'init_item_1' && i.id !== 'init_item_2'
-        );
-        setGalleryItems(serverItems);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('nisir_gallery_store', JSON.stringify(serverItems));
-        }
+        setGalleryItems(data.items);
       }
     } catch (err) {
-      console.error(err);
+      console.error('Fetch gallery error:', err);
     }
   };
 
-  // Create Gallery Item permanently
+  // Create Gallery Item permanently in Cloud
   const handleCreateGalleryItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!galleryForm.title || !galleryForm.mediaUrl) {
       alert('Please provide a title and media file/URL.');
       return;
-    }
-
-    const localItem = {
-      ...galleryForm,
-      id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
-      createdAt: new Date().toISOString(),
-    };
-
-    // Save to local storage immediately
-    if (typeof window !== 'undefined') {
-      const existing = JSON.parse(localStorage.getItem('nisir_gallery_store') || '[]');
-      const updated = [localItem, ...existing];
-      localStorage.setItem('nisir_gallery_store', JSON.stringify(updated));
-      setGalleryItems(updated);
     }
 
     try {
@@ -306,17 +259,12 @@ export default function AdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(galleryForm),
       });
-      if (res.ok) {
-        const data = await res.json();
-        if (data?.item && typeof window !== 'undefined') {
-          const existing = JSON.parse(localStorage.getItem('nisir_gallery_store') || '[]');
-          const synced = existing.map((i: any) => (i.id === localItem.id ? data.item : i));
-          localStorage.setItem('nisir_gallery_store', JSON.stringify(synced));
-          setGalleryItems(synced);
-        }
+      const data = await res.json();
+      if (res.ok && data?.item) {
+        setGalleryItems((prev) => [data.item, ...prev.filter((i) => i.id !== data.item.id)]);
       }
     } catch (err) {
-      console.error(err);
+      console.error('Create gallery item error:', err);
     } finally {
       setNewGalleryModal(false);
       setGalleryForm({
@@ -329,30 +277,23 @@ export default function AdminPage() {
         category: 'Match',
         featured: false,
       });
+      fetchGallery();
     }
   };
 
-  // Delete Gallery Item permanently
+  // Delete Gallery Item permanently from Cloud
   const handleDeleteGalleryItem = async (id: string) => {
     if (!confirm('Are you sure you want to permanently delete this media item?')) return;
 
-    // 1. Immediately delete from localStorage and mark as deleted
-    if (typeof window !== 'undefined') {
-      const localDeleted = JSON.parse(localStorage.getItem('nisir_deleted_ids') || '[]');
-      localDeleted.push(id);
-      localStorage.setItem('nisir_deleted_ids', JSON.stringify(localDeleted));
+    // Optimistic UI update
+    setGalleryItems((prev) => prev.filter((i) => i.id !== id));
 
-      const existing = JSON.parse(localStorage.getItem('nisir_gallery_store') || '[]');
-      const updated = existing.filter((i: any) => i.id !== id);
-      localStorage.setItem('nisir_gallery_store', JSON.stringify(updated));
-      setGalleryItems(updated);
-    }
-
-    // 2. Delete on server
     try {
-      await fetch(`/api/admin/gallery?id=${id}`, { method: 'DELETE' });
+      await fetch(`/api/admin/gallery?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
     } catch (err) {
-      console.error(err);
+      console.error('Delete gallery error:', err);
+    } finally {
+      fetchGallery();
     }
   };
 
