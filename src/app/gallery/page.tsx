@@ -35,6 +35,8 @@ export default function GalleryPage() {
       }
     } catch (err) {
       console.error('Fetch gallery error:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
