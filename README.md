@@ -30,14 +30,14 @@ On first arrival, visitors choose their preferred language and experience a full
 ## 📂 Page Architecture & Site Map
 
 - **Language Selector & Splash Intro**: First-visit language selection & welcome video.
-- **Home (`/`)**: Cinematic hero video/montage, snapshots (250+ players, 4 age categories, 90% academic standard), founding teaser, motto, and registration CTA.
+- **Home (`/`)**: Hero video/montage, snapshots (200+ players, 4 age categories, 90% academic standard), founding teaser, motto, and registration CTA.
 - **About Us (`/about`)**: 2013 E.C. COVID-19 founding story, COVID-era masked training photo archives, Coach challenge interview video, motto, and mission & core values.
-- **Why Should You Join Us (`/why-join`)**: Academic & football harmony, coaching quality, Chapi Stadium facilities, student and parent video testimonials.
+- **Why Should You Join Us (`/why-join`)**: Academic & football harmony, coaching quality, Manafesha Meda facilities, student and parent video testimonials.
 - **Rules & Regulations (`/rules`)**: Mandatory background disclosure upon joining, age-tiered academic ranking requirements (U10 rank 1-5, U13 rank 1-10, U15/17 rank 1-20, 90% average), and strictly forbidden activities (mobile games, video games, PlayStation, pool/foosball, unauthorized matches).
-- **Gallery (`/gallery`)**: Unified cinematic photo and video gallery with filter tabs and fullscreen lightbox modal.
+- **Gallery (`/gallery`)**: Unified photo and video gallery with filter tabs and fullscreen lightbox modal.
 - **Coach (`/coach`)**: Profile of Head Coach Fisha Welde Meskel, coaching philosophy, video interview, and direct hotline.
 - **Contact Us (`/contact`)**: Hotlines (`+251 911 651 214` & `+251 908 171 773`), TikTok `@nisiradama`, Franco Batu Tower 2nd floor, and inquiry form.
-- **Location (`/location`)**: Interactive Google Map pinned to Chapi Stadium, Adama with transport and arrival directions.
+- **Location (`/location`)**: Interactive Google Map pinned to Manafesha Meda, Adama with transport and arrival directions.
 - **Registration (`/register`)**: 5-step multi-child registration with dynamic fee calculation (U10/U13: 4000 Birr, U15/17: 5000 Birr), CBE (`1000666650275`) & Telebirr (`0911651214`), proof upload, and printable confirmation slip.
 - **Admin Dashboard (`/admin`)**: Password-protected portal (`fisha weldemeskel`) with registration verification queue, Universal Media CMS, Gallery manager, and password settings.
 

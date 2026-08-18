@@ -180,6 +180,14 @@ export default function AdminPage() {
 
   // Update Registration Status
   const handleUpdateRegStatus = async (id: string, status: 'VERIFIED' | 'REJECTED') => {
+    // Optimistic UI update
+    setRegistrations((prev) =>
+      prev.map((r) => (r.id === id || r.registrationCode === id ? { ...r, status, adminNotes: adminNoteInput } : r))
+    );
+    if (selectedReg && (selectedReg.id === id || selectedReg.registrationCode === id)) {
+      setSelectedReg({ ...selectedReg, status, adminNotes: adminNoteInput });
+    }
+
     try {
       const res = await fetch('/api/admin/registrations', {
         method: 'PATCH',
@@ -188,12 +196,9 @@ export default function AdminPage() {
       });
       if (res.ok) {
         fetchRegistrations();
-        if (selectedReg && selectedReg.id === id) {
-          setSelectedReg({ ...selectedReg, status, adminNotes: adminNoteInput });
-        }
       }
     } catch (err) {
-      console.error(err);
+      console.error('Update registration status error:', err);
     }
   };
 

@@ -29,9 +29,13 @@ export async function GET(req: NextRequest) {
       });
 
       const uniqueMap = new Map();
-      registrations.forEach((r: any) => uniqueMap.set(r.registrationCode, r));
+      // First insert blob items
+      registrations.forEach((r: any) => {
+        if (r && r.registrationCode) uniqueMap.set(r.registrationCode, r);
+      });
+      // Then insert any Prisma items not yet in blob
       dbRegistrations.forEach((r: any) => {
-        if (!uniqueMap.has(r.registrationCode)) {
+        if (r && r.registrationCode && !uniqueMap.has(r.registrationCode)) {
           uniqueMap.set(r.registrationCode, r);
         }
       });
@@ -65,7 +69,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ registrations, stats });
   } catch (error: any) {
     console.error('Admin fetch registrations error:', error);
-    return NextResponse.json({ registrations: [], stats: { total: 0, pending: 0, verified: 0, rejected: 0, totalPlayers: 0 } });
+    return NextResponse.json({
+      registrations: [],
+      stats: { total: 0, pending: 0, verified: 0, rejected: 0, totalPlayers: 0 },
+    });
   }
 }
 
@@ -81,31 +88,78 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    const cleanId = String(id).trim();
+    const cleanStatus = status.trim().toUpperCase();
+
     const db = await getDb();
-    const currentRegs = db.registrations || [];
-    const idx = currentRegs.findIndex((r: any) => r.id === id || r.registrationCode === id);
-    if (idx !== -1) {
-      currentRegs[idx].status = status;
-      if (adminNotes !== undefined) currentRegs[idx].adminNotes = adminNotes;
-      if (status === 'VERIFIED') currentRegs[idx].verifiedAt = new Date().toISOString();
+    const currentRegs = [...(db.registrations || [])];
+
+    let foundIdx = currentRegs.findIndex(
+      (r: any) => r.id === cleanId || r.registrationCode === cleanId
+    );
+
+    const nowIso = new Date().toISOString();
+
+    if (foundIdx !== -1) {
+      currentRegs[foundIdx] = {
+        ...currentRegs[foundIdx],
+        status: cleanStatus,
+        adminNotes: adminNotes !== undefined ? adminNotes : currentRegs[foundIdx].adminNotes,
+        verifiedAt: cleanStatus === 'VERIFIED' ? nowIso : currentRegs[foundIdx].verifiedAt,
+        updatedAt: nowIso,
+      };
+    } else {
+      // If not yet in blob list, look up in Prisma and create a verified record
+      try {
+        const pReg = await prisma.registrationGroup.findFirst({
+          where: {
+            OR: [{ id: cleanId }, { registrationCode: cleanId }],
+          },
+          include: { players: true },
+        });
+        if (pReg) {
+          const newBlobReg = {
+            ...pReg,
+            status: cleanStatus,
+            adminNotes: adminNotes !== undefined ? adminNotes : pReg.adminNotes,
+            verifiedAt: cleanStatus === 'VERIFIED' ? nowIso : pReg.verifiedAt,
+            updatedAt: nowIso,
+          };
+          currentRegs.unshift(newBlobReg);
+          foundIdx = 0;
+        }
+      } catch (e) {}
     }
+
+    // Save permanently to Vercel Blob Database
     await saveDb({ registrations: currentRegs });
 
+    // Update in Prisma
     try {
-      await prisma.registrationGroup.update({
-        where: { id },
+      await prisma.registrationGroup.updateMany({
+        where: {
+          OR: [{ id: cleanId }, { registrationCode: cleanId }],
+        },
         data: {
-          status,
+          status: cleanStatus,
           adminNotes: adminNotes !== undefined ? adminNotes : undefined,
-          verifiedAt: status === 'VERIFIED' ? new Date() : undefined,
+          verifiedAt: cleanStatus === 'VERIFIED' ? new Date() : undefined,
         },
       });
     } catch (err) {
       // Prisma fallback
     }
 
-    return NextResponse.json({ success: true });
+    console.log(`✅ Registration status updated: ID ${cleanId} -> ${cleanStatus}`);
+
+    return NextResponse.json({
+      success: true,
+      id: cleanId,
+      status: cleanStatus,
+      message: `Registration ${cleanStatus.toLowerCase()} successfully`,
+    });
   } catch (error: any) {
+    console.error('Registration status update error:', error);
     return NextResponse.json({ error: error.message || 'Update failed' }, { status: 500 });
   }
 }

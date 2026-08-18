@@ -44,7 +44,7 @@ export default function HomePage() {
   const stats = [
     {
       label: t('home.stats.players'),
-      value: '250+',
+      value: '200+',
       icon: Users,
       color: 'text-amber-400',
       bg: 'bg-amber-400/10',
