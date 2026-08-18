@@ -108,8 +108,18 @@ export default function RegisterPage() {
     setPlayers(updated);
   };
 
-  // Handle Photo Upload
+  // Handle Photo Upload with Instant Local Preview & Server Upload
   const handlePhotoUpload = async (index: number, file: File) => {
+    // 1. Instant local preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        handlePlayerChange(index, 'playerPhotoUrl', e.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+
+    // 2. Upload to server (Vercel Blob or local)
     const formData = new FormData();
     formData.append('file', file);
 
@@ -123,12 +133,22 @@ export default function RegisterPage() {
         handlePlayerChange(index, 'playerPhotoUrl', data.url);
       }
     } catch (err) {
-      console.error('Photo upload error:', err);
+      console.warn('Photo upload server fallback active:', err);
     }
   };
 
-  // Handle Receipt Upload
+  // Handle Receipt Upload with Instant Local Preview & Server Upload
   const handleReceiptUpload = async (file: File) => {
+    // 1. Instant local preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        setReceiptUrl(e.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+
+    // 2. Upload to server (Vercel Blob or local)
     const formData = new FormData();
     formData.append('file', file);
 
@@ -142,7 +162,7 @@ export default function RegisterPage() {
         setReceiptUrl(data.url);
       }
     } catch (err) {
-      console.error('Receipt upload error:', err);
+      console.warn('Receipt upload server fallback active:', err);
     }
   };
 

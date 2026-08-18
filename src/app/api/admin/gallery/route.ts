@@ -5,10 +5,36 @@ export const dynamic = 'force-dynamic';
 
 const globalStore = globalThis as unknown as {
   __nisir_gallery_items?: any[];
+  __nisir_deleted_gallery_ids?: Set<string>;
 };
 
 if (!globalStore.__nisir_gallery_items) {
-  globalStore.__nisir_gallery_items = [];
+  globalStore.__nisir_gallery_items = [
+    {
+      id: 'seed_init_1',
+      title: 'Morning Training at Chapi Stadium',
+      description: 'Tactical drills, agility work, and team spirit.',
+      mediaType: 'photo',
+      mediaUrl: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?q=80&w=1200&auto=format&fit=crop',
+      thumbnail: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?q=80&w=600&auto=format&fit=crop',
+      category: 'Training',
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: 'seed_init_2',
+      title: 'U15 Championship Match',
+      description: 'Nisir Academy championship match action.',
+      mediaType: 'photo',
+      mediaUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1200&auto=format&fit=crop',
+      thumbnail: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=600&auto=format&fit=crop',
+      category: 'Match',
+      createdAt: new Date().toISOString(),
+    },
+  ];
+}
+
+if (!globalStore.__nisir_deleted_gallery_ids) {
+  globalStore.__nisir_deleted_gallery_ids = new Set<string>();
 }
 
 export async function GET(req: NextRequest) {
@@ -32,13 +58,13 @@ export async function GET(req: NextRequest) {
     }
 
     const memItems = globalStore.__nisir_gallery_items || [];
-    
-    // Combine and deduplicate
+    const deletedIds = globalStore.__nisir_deleted_gallery_ids || new Set<string>();
+
     const combined = [...memItems, ...dbItems];
     const uniqueMap = new Map();
     combined.forEach((item) => {
       const key = item.id || item.mediaUrl;
-      if (!uniqueMap.has(key)) {
+      if (item && !deletedIds.has(item.id) && !deletedIds.has(key) && !uniqueMap.has(key)) {
         uniqueMap.set(key, item);
       }
     });
@@ -49,29 +75,6 @@ export async function GET(req: NextRequest) {
     }
     if (mediaType && mediaType !== 'ALL') {
       items = items.filter((i) => i.mediaType === mediaType);
-    }
-
-    if (items.length === 0) {
-      items = [
-        {
-          id: 'def_1',
-          title: 'Morning Training at Chapi Stadium',
-          description: 'Tactical drills, agility work, and team spirit.',
-          mediaType: 'photo',
-          mediaUrl: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?q=80&w=1200&auto=format&fit=crop',
-          thumbnail: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?q=80&w=600&auto=format&fit=crop',
-          category: 'Training',
-        },
-        {
-          id: 'def_2',
-          title: 'U15 Championship Match',
-          description: 'Nisir Academy championship match action.',
-          mediaType: 'photo',
-          mediaUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1200&auto=format&fit=crop',
-          thumbnail: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=600&auto=format&fit=crop',
-          category: 'Match',
-        },
-      ];
     }
 
     return NextResponse.json({ items });
@@ -107,7 +110,7 @@ export async function POST(req: NextRequest) {
       mediaUrl,
       videoUrl: videoUrl || null,
       thumbnail: thumbnail || mediaUrl,
-      category: category || 'Training',
+      category: category || 'Match',
       featured: Boolean(featured),
       createdAt: new Date().toISOString(),
     };
@@ -126,70 +129,19 @@ export async function POST(req: NextRequest) {
           mediaUrl,
           videoUrl: videoUrl || null,
           thumbnail: thumbnail || mediaUrl,
-          category: category || 'Training',
+          category: category || 'Match',
           featured: Boolean(featured),
         },
       });
       return NextResponse.json({ success: true, item: dbItem });
     } catch (dbErr) {
-      console.warn('DB write bypassed, saved to memory:', dbErr);
+      console.warn('DB write bypassed, saved to memory store:', dbErr);
     }
 
     return NextResponse.json({ success: true, item: newItem });
   } catch (error: any) {
     console.error('Error creating gallery item:', error);
     return NextResponse.json({ error: error.message || 'Failed to create item' }, { status: 500 });
-  }
-}
-
-export async function PATCH(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const { id, title, description, mediaType, mediaUrl, videoUrl, thumbnail, category, featured } = body;
-
-    if (!id) {
-      return NextResponse.json({ error: 'Gallery item ID is required' }, { status: 400 });
-    }
-
-    if (globalStore.__nisir_gallery_items) {
-      const idx = globalStore.__nisir_gallery_items.findIndex((i) => i.id === id);
-      if (idx !== -1) {
-        globalStore.__nisir_gallery_items[idx] = {
-          ...globalStore.__nisir_gallery_items[idx],
-          ...(title !== undefined && { title }),
-          ...(description !== undefined && { description }),
-          ...(mediaType !== undefined && { mediaType }),
-          ...(mediaUrl !== undefined && { mediaUrl }),
-          ...(videoUrl !== undefined && { videoUrl }),
-          ...(thumbnail !== undefined && { thumbnail }),
-          ...(category !== undefined && { category }),
-          ...(featured !== undefined && { featured }),
-        };
-      }
-    }
-
-    try {
-      const updated = await prisma.galleryItem.update({
-        where: { id },
-        data: {
-          title: title !== undefined ? title : undefined,
-          description: description !== undefined ? description : undefined,
-          mediaType: mediaType !== undefined ? mediaType : undefined,
-          mediaUrl: mediaUrl !== undefined ? mediaUrl : undefined,
-          videoUrl: videoUrl !== undefined ? videoUrl : undefined,
-          thumbnail: thumbnail !== undefined ? thumbnail : undefined,
-          category: category !== undefined ? category : undefined,
-          featured: featured !== undefined ? Boolean(featured) : undefined,
-        },
-      });
-      return NextResponse.json({ success: true, item: updated });
-    } catch (dbErr) {
-      console.warn('DB update bypassed:', dbErr);
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
@@ -201,6 +153,12 @@ export async function DELETE(req: NextRequest) {
     if (!id) {
       return NextResponse.json({ error: 'Gallery item ID is required' }, { status: 400 });
     }
+
+    // Track deleted ID so it is NEVER restored
+    if (!globalStore.__nisir_deleted_gallery_ids) {
+      globalStore.__nisir_deleted_gallery_ids = new Set<string>();
+    }
+    globalStore.__nisir_deleted_gallery_ids.add(id);
 
     if (globalStore.__nisir_gallery_items) {
       globalStore.__nisir_gallery_items = globalStore.__nisir_gallery_items.filter((i) => i.id !== id);

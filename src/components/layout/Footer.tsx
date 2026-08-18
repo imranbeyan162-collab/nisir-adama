@@ -134,6 +134,18 @@ export function Footer() {
                 <span>TikTok: <span className="text-pink-400 font-mono">@nisiradama</span></span>
                 <ExternalLink className="w-3 h-3 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
               </a>
+
+              {/* Instagram Link */}
+              <a
+                href="https://www.instagram.com/nisiradamafc"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 text-xs font-semibold transition-all group mt-1"
+              >
+                <span className="w-2 h-2 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-500 animate-pulse" />
+                <span>Instagram: <span className="text-rose-400 font-mono">@nisiradamafc</span></span>
+                <ExternalLink className="w-3 h-3 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+              </a>
             </div>
           </div>
 

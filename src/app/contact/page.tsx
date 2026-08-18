@@ -131,6 +131,36 @@ export default function ContactPage() {
             </a>
           </div>
 
+          {/* Instagram Account Promotion Card */}
+          <div className="p-6 rounded-3xl bg-gradient-to-br from-[#1A0B1E] via-[#2A0F2E] to-[#120518] border border-purple-500/30 space-y-4 shadow-2xl relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
+                <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-500 animate-pulse" />
+                <span>Instagram Profile</span>
+              </div>
+              <span className="text-xs font-mono font-bold text-slate-300">@nisiradamafc</span>
+            </div>
+
+            <div>
+              <h3 className="text-2xl font-black text-white">
+                Follow Us on Instagram
+              </h3>
+              <p className="text-slate-300 text-xs sm:text-sm mt-1 leading-relaxed">
+                Daily match highlights, training reels, academy news, and youth tournament coverage.
+              </p>
+            </div>
+
+            <a
+              href="https://www.instagram.com/nisiradamafc"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500 via-rose-600 to-purple-600 hover:from-amber-400 hover:to-purple-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
+            >
+              <span>Follow @nisiradamafc</span>
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          </div>
+
           {/* Physical Addresses */}
           <div className="p-6 rounded-3xl bg-[#091224] border border-slate-800 space-y-4 shadow-xl">
             <div className="flex items-start gap-3">

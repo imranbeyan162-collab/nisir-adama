@@ -17,11 +17,19 @@ export async function POST(req: NextRequest) {
     const cleanUser = username.trim().toLowerCase();
     const cleanPass = password.trim();
     const envPass = process.env.ADMIN_PASSWORD || 'fisha weldemeskel';
+    const globalStore = globalThis as unknown as {
+      __nisir_admin_passwords?: Record<string, string>;
+    };
+    const memPass = globalStore.__nisir_admin_passwords?.[cleanUser] || globalStore.__nisir_admin_passwords?.['admin'];
 
-    // Check built-in fallback admin credentials first (works even if database is offline or uninitialized on Vercel)
+    // Check built-in fallback admin credentials or updated password
     const isCoachDefault =
       (cleanUser === 'coach' || cleanUser === 'fisha' || cleanUser === 'admin') &&
-      (cleanPass.toLowerCase() === 'fisha weldemeskel' || cleanPass === envPass || cleanPass === 'admin' || cleanPass === 'coach');
+      (cleanPass.toLowerCase() === 'fisha weldemeskel' ||
+        cleanPass === envPass ||
+        cleanPass === 'admin' ||
+        cleanPass === 'coach' ||
+        cleanPass === memPass);
 
     let dbUser: any = null;
     try {
