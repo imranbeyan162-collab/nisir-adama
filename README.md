@@ -1,6 +1,6 @@
 # Nisir Football Academy — Official Web Application & CMS
 
-> **Adama, Ethiopia • Chapi Meda / Chapi Stadium**  
+> **Adama, Ethiopia • Manafesha Meda**  
 > **"A Better Dream for a Better Life"**  
 > Prepared & Developed by **Imako Digital Marketing Agency** (`+251 912 251 113` / `+251 921 799 925` / `imranbeyan162@gmail.com`)
 
