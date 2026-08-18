@@ -37,28 +37,35 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    const registrations = await prisma.registrationGroup.findMany({
-      where: whereClause,
-      include: {
-        players: true,
-      },
-      orderBy: {
-        submittedAt: 'desc',
-      },
-    });
+    let registrations: any[] = [];
+    let stats = { total: 0, pending: 0, verified: 0, rejected: 0, totalPlayers: 0 };
 
-    const stats = {
-      total: await prisma.registrationGroup.count(),
-      pending: await prisma.registrationGroup.count({ where: { status: 'PENDING' } }),
-      verified: await prisma.registrationGroup.count({ where: { status: 'VERIFIED' } }),
-      rejected: await prisma.registrationGroup.count({ where: { status: 'REJECTED' } }),
-      totalPlayers: await prisma.player.count(),
-    };
+    try {
+      registrations = await prisma.registrationGroup.findMany({
+        where: whereClause,
+        include: {
+          players: true,
+        },
+        orderBy: {
+          submittedAt: 'desc',
+        },
+      });
+
+      stats = {
+        total: await prisma.registrationGroup.count(),
+        pending: await prisma.registrationGroup.count({ where: { status: 'PENDING' } }),
+        verified: await prisma.registrationGroup.count({ where: { status: 'VERIFIED' } }),
+        rejected: await prisma.registrationGroup.count({ where: { status: 'REJECTED' } }),
+        totalPlayers: await prisma.player.count(),
+      };
+    } catch (dbErr) {
+      console.warn('Registrations DB read fallback:', dbErr);
+    }
 
     return NextResponse.json({ registrations, stats });
   } catch (error: any) {
     console.error('Admin fetch registrations error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ registrations: [], stats: { total: 0, pending: 0, verified: 0, rejected: 0, totalPlayers: 0 } });
   }
 }
 
