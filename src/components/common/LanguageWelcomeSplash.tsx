@@ -38,18 +38,18 @@ export function LanguageWelcomeSplash({ forceOpen = false, onComplete }: Languag
   const languageVideos: Record<Locale, { src: string; title: string; subtitle: string }> = {
     om: {
       src: 'https://assets.mixkit.co/videos/preview/mixkit-young-soccer-players-training-on-a-field-42417-large.mp4',
-      title: 'Baga Gara Akaadaamii Kubbaa Miilaa Nasiir Dhuftan!',
-      subtitle: 'Adaamaa Istaadiyeemii Chaapii — Abjuu Gaarii Jireenya Gaariif',
+      title: 'Baga Gara Akaadaamii Kubbaa Miilaa Nisir Dhuftan!',
+      subtitle: 'Adaamaa Istaadiyeemii Manafashaa — Abjuu Gaarii Jireenya Gaariif',
     },
     am: {
       src: 'https://assets.mixkit.co/videos/preview/mixkit-soccer-player-kicking-a-ball-in-a-stadium-41121-large.mp4',
       title: 'እንኳን ወደ ንስር እግር ኳስ አካዳሚ በደህና መጡ!',
-      subtitle: 'ቻፒ ስታዲየም፣ አዳማ — የተሻለ ህልም ለተሻለ ህይወት',
+      subtitle: 'መናፈሻ ሜዳ፣ አዳማ — የተሻለ ህልም ለተሻለ ህይወት',
     },
     en: {
       src: 'https://assets.mixkit.co/videos/preview/mixkit-coach-talking-with-a-group-of-young-soccer-players-42416-large.mp4',
       title: 'Welcome to Nisir Football Academy Adama!',
-      subtitle: 'Chapi Stadium, Adama — A Better Dream for a Better Life',
+      subtitle: 'Manafesha Meda, Adama — A Better Dream for a Better Life',
     },
   };
 
@@ -176,7 +176,7 @@ export function LanguageWelcomeSplash({ forceOpen = false, onComplete }: Languag
 
           <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
             <Sparkles className="w-4 h-4 text-amber-400" />
-            <span>Cinematic welcome video plays automatically upon language selection.</span>
+            <span>Academy welcome video plays automatically upon language selection.</span>
           </div>
         </div>
       )}

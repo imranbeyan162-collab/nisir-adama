@@ -1004,7 +1004,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="pt-4 border-t border-slate-850 flex items-center justify-between text-xs text-slate-400">
-              <span>Training Ground: Chapi Meda, Adama</span>
+              <span>Training Ground: Manafesha Meda, Adama</span>
               <span>Coach: 0911 651 214</span>
             </div>
           </div>

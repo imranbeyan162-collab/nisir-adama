@@ -1,15 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getDb, saveDb } from '@/lib/blobDb';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
-
-const globalStore = globalThis as unknown as {
-  __nisir_registrations?: any[];
-};
-
-if (!globalStore.__nisir_registrations) {
-  globalStore.__nisir_registrations = [];
-}
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,53 +11,35 @@ export async function GET(req: NextRequest) {
     const ageCategory = searchParams.get('category');
     const search = searchParams.get('search');
 
-    let dbRegistrations: any[] = [];
-    let dbStats: any = null;
+    const db = await getDb();
+    let registrations = db.registrations || [];
 
+    // Prisma sync attempt
     try {
       let whereClause: any = {};
       if (status && status !== 'ALL') whereClause.status = status;
       if (ageCategory && ageCategory !== 'ALL') {
         whereClause.players = { some: { ageCategory } };
       }
-      if (search) {
-        whereClause.OR = [
-          { parentName: { contains: search } },
-          { parentPhone: { contains: search } },
-          { registrationCode: { contains: search } },
-          { transactionNumber: { contains: search } },
-          { players: { some: { fullName: { contains: search } } } },
-        ];
-      }
 
-      dbRegistrations = await prisma.registrationGroup.findMany({
+      const dbRegistrations = await prisma.registrationGroup.findMany({
         where: whereClause,
         include: { players: true },
         orderBy: { submittedAt: 'desc' },
       });
 
-      dbStats = {
-        total: await prisma.registrationGroup.count(),
-        pending: await prisma.registrationGroup.count({ where: { status: 'PENDING' } }),
-        verified: await prisma.registrationGroup.count({ where: { status: 'VERIFIED' } }),
-        rejected: await prisma.registrationGroup.count({ where: { status: 'REJECTED' } }),
-        totalPlayers: await prisma.player.count(),
-      };
-    } catch (dbErr) {
-      console.warn('Registrations DB read fallback:', dbErr);
+      const uniqueMap = new Map();
+      registrations.forEach((r: any) => uniqueMap.set(r.registrationCode, r));
+      dbRegistrations.forEach((r: any) => {
+        if (!uniqueMap.has(r.registrationCode)) {
+          uniqueMap.set(r.registrationCode, r);
+        }
+      });
+      registrations = Array.from(uniqueMap.values());
+    } catch (err) {
+      // Prisma fallback
     }
 
-    const memRegistrations = globalStore.__nisir_registrations || [];
-    const combined = [...memRegistrations, ...dbRegistrations];
-    const uniqueMap = new Map();
-    combined.forEach((r) => {
-      const key = r.registrationCode || r.id;
-      if (!uniqueMap.has(key)) {
-        uniqueMap.set(key, r);
-      }
-    });
-
-    let registrations = Array.from(uniqueMap.values());
     if (status && status !== 'ALL') {
       registrations = registrations.filter((r) => r.status === status);
     }
@@ -79,7 +54,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const stats = dbStats || {
+    const stats = {
       total: registrations.length,
       pending: registrations.filter((r) => r.status === 'PENDING').length,
       verified: registrations.filter((r) => r.status === 'VERIFIED').length,
@@ -106,28 +81,27 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    if (globalStore.__nisir_registrations) {
-      const idx = globalStore.__nisir_registrations.findIndex((r) => r.id === id || r.registrationCode === id);
-      if (idx !== -1) {
-        globalStore.__nisir_registrations[idx].status = status;
-        if (adminNotes !== undefined) globalStore.__nisir_registrations[idx].adminNotes = adminNotes;
-        if (status === 'VERIFIED') globalStore.__nisir_registrations[idx].verifiedAt = new Date().toISOString();
-      }
+    const db = await getDb();
+    const currentRegs = db.registrations || [];
+    const idx = currentRegs.findIndex((r: any) => r.id === id || r.registrationCode === id);
+    if (idx !== -1) {
+      currentRegs[idx].status = status;
+      if (adminNotes !== undefined) currentRegs[idx].adminNotes = adminNotes;
+      if (status === 'VERIFIED') currentRegs[idx].verifiedAt = new Date().toISOString();
     }
+    await saveDb({ registrations: currentRegs });
 
     try {
-      const updated = await prisma.registrationGroup.update({
+      await prisma.registrationGroup.update({
         where: { id },
         data: {
           status,
           adminNotes: adminNotes !== undefined ? adminNotes : undefined,
           verifiedAt: status === 'VERIFIED' ? new Date() : undefined,
         },
-        include: { players: true },
       });
-      return NextResponse.json({ success: true, registration: updated });
-    } catch (dbErr) {
-      console.warn('DB update bypassed, updated in memory:', dbErr);
+    } catch (err) {
+      // Prisma fallback
     }
 
     return NextResponse.json({ success: true });

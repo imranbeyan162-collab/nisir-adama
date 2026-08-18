@@ -55,7 +55,7 @@ export default function GalleryPage() {
       {/* Page Header */}
       <div className="text-center max-w-3xl mx-auto space-y-4">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-wider">
-          <Sparkles className="w-4 h-4" /> Cinematic Media Center
+          <Sparkles className="w-4 h-4" /> Academy Media Center
         </div>
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white uppercase tracking-tight">
           {t('gallery.title')}
@@ -92,7 +92,7 @@ export default function GalleryPage() {
       {/* Media Grid */}
       {loading ? (
         <div className="py-24 text-center text-slate-400 text-sm">
-          Loading cinematic media archives...
+          Loading academy media archives...
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="py-24 text-center text-slate-400 text-sm">

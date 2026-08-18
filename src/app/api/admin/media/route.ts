@@ -1,15 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getDb, saveDb } from '@/lib/blobDb';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
-
-const globalStore = globalThis as unknown as {
-  __nisir_page_media?: Record<string, any>;
-};
-
-if (!globalStore.__nisir_page_media) {
-  globalStore.__nisir_page_media = {};
-}
 
 export async function GET(req: NextRequest) {
   try {
@@ -17,56 +10,23 @@ export async function GET(req: NextRequest) {
     const page = searchParams.get('page');
     const sectionKey = searchParams.get('sectionKey');
 
-    // 1. Single section request
+    const db = await getDb();
+    const mediaMap = db.pageMedia || {};
+    const settings = db.siteSettings || {};
+
     if (sectionKey) {
-      if (globalStore.__nisir_page_media && globalStore.__nisir_page_media[sectionKey]) {
-        return NextResponse.json({ item: globalStore.__nisir_page_media[sectionKey] });
-      }
-      try {
-        const item = await prisma.pageMedia.findUnique({
-          where: { sectionKey },
-        });
-        if (item) return NextResponse.json({ item });
-      } catch (dbErr) {
-        console.warn('PageMedia findUnique fallback:', dbErr);
-      }
-      return NextResponse.json({ item: null });
+      return NextResponse.json({ item: mediaMap[sectionKey] || null });
     }
 
-    // 2. All or page items
-    let dbItems: any[] = [];
-    let settings: any[] = [];
-    try {
-      let whereClause: any = {};
-      if (page && page !== 'all') whereClause.page = page;
-
-      dbItems = await prisma.pageMedia.findMany({
-        where: whereClause,
-        orderBy: { updatedAt: 'desc' },
-      });
-      settings = await prisma.siteSetting.findMany();
-    } catch (dbErr) {
-      console.warn('PageMedia DB read fallback:', dbErr);
-    }
-
-    const memItems = Object.values(globalStore.__nisir_page_media || {});
-    const combined = [...memItems, ...dbItems];
-    const uniqueMap = new Map();
-    combined.forEach((item) => {
-      if (item && item.sectionKey && !uniqueMap.has(item.sectionKey)) {
-        uniqueMap.set(item.sectionKey, item);
-      }
-    });
-
-    let items = Array.from(uniqueMap.values());
+    let items = Object.values(mediaMap);
     if (page && page !== 'all') {
-      items = items.filter((i) => i.page === page);
+      items = items.filter((i: any) => i.page === page);
     }
 
     return NextResponse.json({ items, settings });
   } catch (error: any) {
     console.error('Error fetching page media:', error);
-    return NextResponse.json({ items: [], settings: [] });
+    return NextResponse.json({ items: [], settings: {} });
   }
 }
 
@@ -106,39 +66,21 @@ export async function POST(req: NextRequest) {
       updatedAt: new Date().toISOString(),
     };
 
-    // 1. Save to in-memory store
-    if (!globalStore.__nisir_page_media) globalStore.__nisir_page_media = {};
-    globalStore.__nisir_page_media[sectionKey] = mediaObj;
+    // 1. Save permanently to Vercel Blob Database
+    const db = await getDb();
+    const currentMedia = { ...(db.pageMedia || {}) };
+    currentMedia[sectionKey] = mediaObj;
+    await saveDb({ pageMedia: currentMedia });
 
-    // 2. Attempt DB write if available
+    // 2. Prisma sync
     try {
-      const mediaItem = await prisma.pageMedia.upsert({
+      await prisma.pageMedia.upsert({
         where: { sectionKey },
-        update: {
-          page,
-          title,
-          subtitle: subtitle || null,
-          mediaType: mediaType || 'photo',
-          mediaUrl,
-          embedUrl: embedUrl || null,
-          thumbnail: thumbnail || mediaUrl,
-          caption: caption || null,
-        },
-        create: {
-          sectionKey,
-          page,
-          title,
-          subtitle: subtitle || null,
-          mediaType: mediaType || 'photo',
-          mediaUrl,
-          embedUrl: embedUrl || null,
-          thumbnail: thumbnail || mediaUrl,
-          caption: caption || null,
-        },
+        update: mediaObj,
+        create: mediaObj,
       });
-      return NextResponse.json({ success: true, item: mediaItem });
     } catch (dbErr) {
-      console.warn('DB upsert bypassed, saved to server memory:', dbErr);
+      // Prisma fallback
     }
 
     return NextResponse.json({ success: true, item: mediaObj });

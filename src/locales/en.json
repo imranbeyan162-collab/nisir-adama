@@ -17,14 +17,14 @@
     "amharic": "አማርኛ (Amharic)",
     "english": "English",
     "welcome_title": "Welcome to Nisir Football Academy",
-    "welcome_subtitle": "Chapi Stadium, Adama — Building Character, Champions & Academic Excellence",
+    "welcome_subtitle": "Manafesha Meda, Adama — Building Character, Champions & Academic Excellence",
     "enter_site": "Enter Official Website",
-    "playing_intro": "Cinematic Welcome Presentation",
+    "playing_intro": "Academy Welcome Presentation",
     "skip_or_proceed": "Proceed to Home"
   },
   "branding": {
     "name": "Nisir Football Academy",
-    "location": "Adama, Ethiopia (Chapi Stadium)",
+    "location": "Adama, Ethiopia (Manafesha Meda)",
     "motto": "A Better Dream for a Better Life",
     "motto_short": "BETTER DREAM BETTER LIFE",
     "founded_ec": "Founded in 2013 E.C. (COVID-19 Period)",
@@ -34,7 +34,7 @@
     "hero_title": "Nisir Football Academy Adama",
     "hero_tagline": "Empowering youth through elite football coaching, strict academic standards, and moral discipline.",
     "register_cta": "Register Trainee",
-    "explore_gallery": "View Cinematic Gallery",
+    "explore_gallery": "View Gallery",
     "why_nisir_btn": "Why Choose Nisir?",
     "stats": {
       "players": "250+ Players Trained",
@@ -43,16 +43,16 @@
       "founded": "Founded 2013 E.C."
     },
     "quick_about_title": "Forged in Resilience",
-    "quick_about_desc": "Founded at Chapi Meda during the COVID-19 pandemic to protect youth from psychological strain, Nisir has grown into Adama's most respected grassroots football institution.",
+    "quick_about_desc": "Founded at Manafesha Meda during the COVID-19 pandemic to protect youth from psychological strain, Nisir has grown into Adama's most respected grassroots football institution.",
     "quick_about_cta": "Read Our Full Story",
     "featured_video_title": "The Nisir Spirit in Action",
-    "featured_video_subtitle": "Watch our players train with speed, tactical discipline, and teamwork at Chapi Stadium."
+    "featured_video_subtitle": "Watch our players train with speed, tactical discipline, and teamwork at Manafesha Meda."
   },
   "about": {
     "title": "About Nisir Football Academy",
     "subtitle": "Building future leaders through athletic excellence and mental toughness since 2013 E.C.",
     "founding_story_title": "Our Founding Story (2013 E.C.)",
-    "founding_story_p1": "Nisir Football Academy was established in 2013 E.C. (during the COVID-19 pandemic period) in Adama at Chapi Meda. When schools closed and students were confined at home, the founders recognized the heavy psychological strain, anxiety, and idle screen time burdening local youth.",
+    "founding_story_p1": "Nisir Football Academy was established in 2013 E.C. (during the COVID-19 pandemic period) in Adama at Manafesha Meda. When schools closed and students were confined at home, the founders recognized the heavy psychological strain, anxiety, and idle screen time burdening local youth.",
     "founding_story_p2": "Under strict health precautions and hygiene protocols, Coach Fisha Welde Meskel gathered a passionate initial cohort of young players to train on the pitch. Football became a sanctuary for mental health, physical vitality, and communal hope.",
     "covid_gallery_title": "COVID-Era Training Archives",
     "covid_gallery_desc": "Historical photos and footage of our players practicing with masks and strict distancing during the early formative sessions.",
@@ -75,7 +75,7 @@
     "pillar2_title": "Academic Rigor & Monitoring",
     "pillar2_desc": "We require our players to lead their classrooms. Trainees are monitored to maintain top rankings and up to 90% school exam averages.",
     "pillar3_title": "Premier Training Ground",
-    "pillar3_desc": "Regular morning and weekend training sessions held at Adama's Chapi Meda / Chapi Stadium with complete equipment.",
+    "pillar3_desc": "Regular morning and weekend training sessions held at Adama's Manafesha Meda / Manafesha Meda with complete equipment.",
     "pillar4_title": "Safe & Distraction-Free Environment",
     "pillar4_desc": "Strict code of conduct prohibiting video games, gambling, and unsupervised street football, keeping trainees focused on their future.",
     "testimonials_title": "Student & Parent Testimonials",
@@ -114,8 +114,8 @@
     "contact_coach": "Contact Coach Directly"
   },
   "gallery": {
-    "title": "Cinematic Academy Gallery",
-    "subtitle": "Moments of glory, training intensity, and brotherhood at Chapi Stadium.",
+    "title": "Academy Academy Gallery",
+    "subtitle": "Moments of glory, training intensity, and brotherhood at Manafesha Meda.",
     "filter_all": "All Media",
     "filter_photos": "Photos Only",
     "filter_videos": "Videos Only",
@@ -138,7 +138,7 @@
     "office_title": "Office Address",
     "office_desc": "Franco Batu Tower, 2nd Floor, Adama, Ethiopia",
     "stadium_title": "Training Pitch / Ground",
-    "stadium_desc": "Chapi Meda / Chapi Stadium, Adama",
+    "stadium_desc": "Manafesha Meda / Manafesha Meda, Adama",
     "send_message": "Send Us a Direct Message",
     "name_label": "Your Name",
     "phone_label": "Phone Number",
@@ -147,9 +147,9 @@
   },
   "location": {
     "title": "Our Training Ground & Map",
-    "subtitle": "Chapi Meda / Chapi Stadium, Adama — Home of Nisir Academy",
+    "subtitle": "Manafesha Meda / Manafesha Meda, Adama — Home of Nisir Academy",
     "directions_title": "Directions & Arrival Guide",
-    "dir_1": "Located centrally in Adama at the famous Chapi Meda stadium complex.",
+    "dir_1": "Located centrally in Adama at the famous Manafesha Meda stadium complex.",
     "dir_2": "Easily accessible by Bajaj, minibus, or private car from the Franco / Posta area.",
     "dir_3": "Parents are welcome to attend training sessions on designated weekend mornings."
   },
@@ -203,7 +203,7 @@
     "submit_reg_btn": "Submit Registration & Proof",
     "success_title": "Registration Submitted Successfully!",
     "success_desc": "Your submission has been recorded and is pending administrative verification.",
-    "important_notice": "IMPORTANT: Keep your payment receipt and report to Chapi Stadium for kit assignment and schedule briefing.",
+    "important_notice": "IMPORTANT: Keep your payment receipt and report to Manafesha Meda for kit assignment and schedule briefing.",
     "reg_code": "Your Registration Code:",
     "print_slip": "Print Registration Slip"
   },

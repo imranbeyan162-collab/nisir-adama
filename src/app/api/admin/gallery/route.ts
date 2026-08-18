@@ -1,41 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getDb, saveDb, GalleryItemData } from '@/lib/blobDb';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
-
-const globalStore = globalThis as unknown as {
-  __nisir_gallery_items?: any[];
-  __nisir_deleted_gallery_ids?: Set<string>;
-};
-
-if (!globalStore.__nisir_gallery_items) {
-  globalStore.__nisir_gallery_items = [
-    {
-      id: 'seed_init_1',
-      title: 'Morning Training at Chapi Stadium',
-      description: 'Tactical drills, agility work, and team spirit.',
-      mediaType: 'photo',
-      mediaUrl: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?q=80&w=1200&auto=format&fit=crop',
-      thumbnail: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?q=80&w=600&auto=format&fit=crop',
-      category: 'Training',
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: 'seed_init_2',
-      title: 'U15 Championship Match',
-      description: 'Nisir Academy championship match action.',
-      mediaType: 'photo',
-      mediaUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1200&auto=format&fit=crop',
-      thumbnail: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=600&auto=format&fit=crop',
-      category: 'Match',
-      createdAt: new Date().toISOString(),
-    },
-  ];
-}
-
-if (!globalStore.__nisir_deleted_gallery_ids) {
-  globalStore.__nisir_deleted_gallery_ids = new Set<string>();
-}
 
 export async function GET(req: NextRequest) {
   try {
@@ -43,33 +10,37 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get('category');
     const mediaType = searchParams.get('type');
 
-    let dbItems: any[] = [];
+    // 1. Fetch from permanent Vercel Blob Database
+    const db = await getDb();
+    let items = db.galleryItems || [];
+    const deletedSet = new Set(db.deletedGalleryIds || []);
+
+    // Filter out deleted items
+    items = items.filter((item) => item && !deletedSet.has(item.id));
+
+    // Try merging any Prisma items if available
     try {
       let whereClause: any = {};
       if (category && category !== 'ALL') whereClause.category = category;
       if (mediaType && mediaType !== 'ALL') whereClause.mediaType = mediaType;
 
-      dbItems = await prisma.galleryItem.findMany({
+      const dbItems = await prisma.galleryItem.findMany({
         where: whereClause,
         orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
       });
-    } catch (dbErr) {
-      console.warn('Gallery DB fallback in GET:', dbErr);
+
+      const uniqueMap = new Map();
+      items.forEach((i) => uniqueMap.set(i.id, i));
+      dbItems.forEach((i) => {
+        if (!deletedSet.has(i.id) && !uniqueMap.has(i.id)) {
+          uniqueMap.set(i.id, i);
+        }
+      });
+      items = Array.from(uniqueMap.values()) as GalleryItemData[];
+    } catch (err) {
+      // Prisma fallback
     }
 
-    const memItems = globalStore.__nisir_gallery_items || [];
-    const deletedIds = globalStore.__nisir_deleted_gallery_ids || new Set<string>();
-
-    const combined = [...memItems, ...dbItems];
-    const uniqueMap = new Map();
-    combined.forEach((item) => {
-      const key = item.id || item.mediaUrl;
-      if (item && !deletedIds.has(item.id) && !deletedIds.has(key) && !uniqueMap.has(key)) {
-        uniqueMap.set(key, item);
-      }
-    });
-
-    let items = Array.from(uniqueMap.values());
     if (category && category !== 'ALL') {
       items = items.filter((i) => i.category === category);
     }
@@ -80,7 +51,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ items });
   } catch (error: any) {
     console.error('Error fetching gallery:', error);
-    return NextResponse.json({ items: globalStore.__nisir_gallery_items || [] });
+    return NextResponse.json({ items: [] });
   }
 }
 
@@ -102,7 +73,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Title and media URL are required' }, { status: 400 });
     }
 
-    const newItem = {
+    const newItem: GalleryItemData = {
       id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
       title,
       description: description || null,
@@ -110,18 +81,20 @@ export async function POST(req: NextRequest) {
       mediaUrl,
       videoUrl: videoUrl || null,
       thumbnail: thumbnail || mediaUrl,
-      category: category || 'Match',
+      category: category || 'Training',
       featured: Boolean(featured),
       createdAt: new Date().toISOString(),
     };
 
-    // 1. Save to in-memory store
-    if (!globalStore.__nisir_gallery_items) globalStore.__nisir_gallery_items = [];
-    globalStore.__nisir_gallery_items.unshift(newItem);
+    // 1. Save permanently to Vercel Blob Database
+    const db = await getDb();
+    const currentItems = (db.galleryItems || []).filter((i) => i.id !== newItem.id);
+    currentItems.unshift(newItem);
+    await saveDb({ galleryItems: currentItems });
 
-    // 2. Attempt DB write if available
+    // 2. Prisma sync
     try {
-      const dbItem = await prisma.galleryItem.create({
+      await prisma.galleryItem.create({
         data: {
           title,
           description: description || null,
@@ -129,13 +102,12 @@ export async function POST(req: NextRequest) {
           mediaUrl,
           videoUrl: videoUrl || null,
           thumbnail: thumbnail || mediaUrl,
-          category: category || 'Match',
+          category: category || 'Training',
           featured: Boolean(featured),
         },
       });
-      return NextResponse.json({ success: true, item: dbItem });
     } catch (dbErr) {
-      console.warn('DB write bypassed, saved to memory store:', dbErr);
+      // Prisma fallback
     }
 
     return NextResponse.json({ success: true, item: newItem });
@@ -154,22 +126,19 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Gallery item ID is required' }, { status: 400 });
     }
 
-    // Track deleted ID so it is NEVER restored
-    if (!globalStore.__nisir_deleted_gallery_ids) {
-      globalStore.__nisir_deleted_gallery_ids = new Set<string>();
-    }
-    globalStore.__nisir_deleted_gallery_ids.add(id);
+    // 1. Delete permanently in Vercel Blob Database
+    const db = await getDb();
+    const updatedItems = (db.galleryItems || []).filter((i) => i.id !== id);
+    const deletedIds = Array.from(new Set([...(db.deletedGalleryIds || []), id]));
+    await saveDb({ galleryItems: updatedItems, deletedGalleryIds: deletedIds });
 
-    if (globalStore.__nisir_gallery_items) {
-      globalStore.__nisir_gallery_items = globalStore.__nisir_gallery_items.filter((i) => i.id !== id);
-    }
-
+    // 2. Prisma delete
     try {
       await prisma.galleryItem.delete({
         where: { id },
       });
     } catch (dbErr) {
-      console.warn('DB delete bypassed:', dbErr);
+      // Prisma fallback
     }
 
     return NextResponse.json({ success: true });

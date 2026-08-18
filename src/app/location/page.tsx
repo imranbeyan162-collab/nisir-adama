@@ -44,9 +44,9 @@ export default function LocationPage() {
     settings.google_maps_direct_url ||
     `https://www.google.com/maps?q=${latitude},${longitude}`;
 
-  const trainingGround = settings.training_ground || 'Chapi Meda / Chapi Stadium, Adama';
+  const trainingGround = settings.training_ground || 'Manafesha Meda / Manafesha Meda, Adama';
   const officeAddress = settings.office_address || 'Franco Batu Tower, 2nd Floor, Adama, Ethiopia';
-  const directions1 = settings.location_directions_1 || `Located at Chapi Meda / Chapi Stadium in Adama at GPS Coordinates: ${coordinates}.`;
+  const directions1 = settings.location_directions_1 || `Located at Manafesha Meda / Manafesha Meda in Adama at GPS Coordinates: ${coordinates}.`;
   const directions2 = settings.location_directions_2 || t('location.dir_2');
   const directions3 = settings.location_directions_3 || t('location.dir_3');
 
@@ -69,7 +69,7 @@ export default function LocationPage() {
       <section className="rounded-3xl overflow-hidden border border-slate-800 shadow-2xl bg-[#091224] p-4 space-y-4">
         <div className="aspect-[16/9] sm:aspect-[21/9] w-full rounded-2xl overflow-hidden bg-slate-950 relative">
           <iframe
-            title="Nisir Academy Chapi Stadium Map"
+            title="Nisir Academy Manafesha Meda Map"
             src={mapEmbedUrl}
             width="100%"
             height="100%"
@@ -157,7 +157,7 @@ export default function LocationPage() {
               <strong>GPS:</strong> <span className="font-mono text-amber-400">{coordinates}</span>
             </div>
             <div className="text-slate-400">
-              Adama, Ethiopia • Chapi Meda Sports Complex
+              Adama, Ethiopia • Manafesha Meda Sports Complex
             </div>
           </div>
           <a

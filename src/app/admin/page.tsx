@@ -83,13 +83,13 @@ export default function AdminPage() {
 
   // Location & Site Settings State
   const [siteSettings, setSiteSettings] = useState<Record<string, string>>({
-    training_ground: 'Chapi Meda / Chapi Stadium, Adama',
+    training_ground: 'Manafesha Meda / Manafesha Meda, Adama',
     office_address: 'Franco Batu Tower, 2nd Floor, Adama, Ethiopia',
     coach_phone_1: '+251 911 651 214',
     coach_phone_2: '+251 908 171 773',
     tiktok_handle: '@nisiradama',
     map_embed_url: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3944.5!2d39.268!3d8.54!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x164b1f3c3a000001%3A0x0!2sAdama%2C%20Ethiopia!5e0!3m2!1sen!2set!4v1700000000000',
-    location_directions_1: 'Located centrally in Adama at the famous Chapi Meda stadium complex.',
+    location_directions_1: 'Located centrally in Adama at the famous Manafesha Meda stadium complex.',
     location_directions_2: 'Easily accessible by Bajaj, minibus, or private car from the Franco / Posta area.',
     location_directions_3: 'Parents are welcome to attend training sessions on designated weekend mornings.',
   });
@@ -439,9 +439,6 @@ export default function AdminPage() {
               />
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-[11px] text-slate-400">
-              Initial coach password from spec: <strong className="text-amber-400">fisha weldemeskel</strong>
-            </div>
 
             <button
               type="submit"
@@ -1482,7 +1479,7 @@ export default function AdminPage() {
                 required
                 value={siteSettings.training_ground || ''}
                 onChange={(e) => setSiteSettings({ ...siteSettings, training_ground: e.target.value })}
-                placeholder="Chapi Meda / Chapi Stadium, Adama"
+                placeholder="Manafesha Meda / Manafesha Meda, Adama"
                 className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:border-amber-400 focus:outline-none"
               />
             </div>

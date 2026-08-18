@@ -127,7 +127,7 @@ export function generateRegistrationSlipPDF(data: RegistrationSlipData) {
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
-  doc.text('Keep your payment receipt and this slip, and report to Chapi Stadium, Adama.', pageWidth / 2, currentY + 15, { align: 'center' });
+  doc.text('Keep your payment receipt and this slip, and report to Manafesha Meda, Adama.', pageWidth / 2, currentY + 15, { align: 'center' });
   doc.text('Trainee kit assignment, schedule orientation, and squad grouping will be provided on ground.', pageWidth / 2, currentY + 21, { align: 'center' });
 
   // Academy Ground & Contact Details
@@ -135,7 +135,7 @@ export function generateRegistrationSlipPDF(data: RegistrationSlipData) {
   doc.setTextColor(148, 163, 184);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.text('Training Grounds: Chapi Meda / Chapi Stadium, Adama', 20, currentY);
+  doc.text('Training Grounds: Manafesha Meda / Manafesha Meda, Adama', 20, currentY);
   doc.text('Office: Franco Batu Tower, 2nd Floor, Adama', 20, currentY + 5);
   doc.text('Coach Fisha Welde Meskel: +251 911 651 214 / +251 908 171 773', 20, currentY + 10);
 

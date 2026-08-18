@@ -96,7 +96,7 @@ export default function AboutPage() {
               </span>
               <p>
                 While the academy emblem preserves the historical &quot;Since 2012&quot; foundational roots,
-                official team operations and structured youth cohort training at Chapi Meda commenced in
+                official team operations and structured youth cohort training at Manafesha Meda commenced in
                 <strong> 2013 E.C. (2020 G.C.)</strong> during the COVID-19 pandemic.
               </p>
             </div>
@@ -114,7 +114,7 @@ export default function AboutPage() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-5">
                 <div className="text-xs text-white">
-                  <span className="font-bold text-amber-400 block uppercase">Chapi Stadium • 2013 E.C.</span>
+                  <span className="font-bold text-amber-400 block uppercase">Manafesha Meda • 2013 E.C.</span>
                   Initial cohort training with discipline and hope.
                 </div>
               </div>
@@ -152,7 +152,7 @@ export default function AboutPage() {
             </div>
             <div className="px-2 pb-2">
               <h4 className="text-white font-bold text-base">
-                {covidMedia1?.title || 'Masked Drills at Chapi Meda'}
+                {covidMedia1?.title || 'Masked Drills at Manafesha Meda'}
               </h4>
               <p className="text-slate-400 text-xs mt-1">
                 {covidMedia1?.caption ||

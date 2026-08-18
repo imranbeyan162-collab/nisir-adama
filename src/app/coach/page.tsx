@@ -70,7 +70,7 @@ export default function CoachPage() {
                   Fisha Welde Meskel
                 </h3>
                 <span className="text-xs text-slate-300">
-                  Adama, Ethiopia • Chapi Stadium
+                  Adama, Ethiopia • Manafesha Meda
                 </span>
               </div>
             </div>

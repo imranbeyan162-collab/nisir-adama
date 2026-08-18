@@ -1,15 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getDb, saveDb } from '@/lib/blobDb';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
-
-const globalStore = globalThis as unknown as {
-  __nisir_registrations?: any[];
-};
-
-if (!globalStore.__nisir_registrations) {
-  globalStore.__nisir_registrations = [];
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -89,11 +82,15 @@ export async function POST(req: NextRequest) {
       players: validatedPlayers,
     };
 
-    if (!globalStore.__nisir_registrations) globalStore.__nisir_registrations = [];
-    globalStore.__nisir_registrations.unshift(regRecord);
+    // 1. Save permanently to Vercel Blob Database
+    const db = await getDb();
+    const currentRegs = db.registrations || [];
+    currentRegs.unshift(regRecord);
+    await saveDb({ registrations: currentRegs });
 
+    // 2. Prisma sync
     try {
-      const dbRegistration = await prisma.registrationGroup.create({
+      await prisma.registrationGroup.create({
         data: {
           registrationCode,
           parentName: regRecord.parentName,
@@ -122,23 +119,9 @@ export async function POST(req: NextRequest) {
             })),
           },
         },
-        include: {
-          players: true,
-        },
       });
-
-      return NextResponse.json({
-        success: true,
-        registrationCode: dbRegistration.registrationCode,
-        registrationId: dbRegistration.id,
-        totalRegFee: calculatedTotalRegFee,
-        totalMonthlyFee: calculatedTotalMonthlyFee,
-        status: dbRegistration.status,
-        playerCount: validatedPlayers.length,
-        notice: 'Keep receipt and report to Chapi Stadium',
-      });
-    } catch (dbErr) {
-      console.warn('Registration DB create bypassed, saved to memory:', dbErr);
+    } catch (err) {
+      // Prisma fallback
     }
 
     return NextResponse.json({
@@ -149,7 +132,7 @@ export async function POST(req: NextRequest) {
       totalMonthlyFee: calculatedTotalMonthlyFee,
       status: regRecord.status,
       playerCount: validatedPlayers.length,
-      notice: 'Keep receipt and report to Chapi Stadium',
+      notice: 'Keep receipt and report to Manafesha Meda',
     });
   } catch (error: any) {
     console.error('Registration submission error:', error);
@@ -169,10 +152,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Registration code is required' }, { status: 400 });
     }
 
-    if (globalStore.__nisir_registrations) {
-      const found = globalStore.__nisir_registrations.find((r) => r.registrationCode === code);
-      if (found) return NextResponse.json({ registration: found });
-    }
+    const db = await getDb();
+    const found = (db.registrations || []).find((r: any) => r.registrationCode === code);
+    if (found) return NextResponse.json({ registration: found });
 
     try {
       const registration = await prisma.registrationGroup.findUnique({
@@ -180,8 +162,8 @@ export async function GET(req: NextRequest) {
         include: { players: true },
       });
       if (registration) return NextResponse.json({ registration });
-    } catch (dbErr) {
-      console.warn('Registration findUnique fallback:', dbErr);
+    } catch (err) {
+      // Prisma fallback
     }
 
     return NextResponse.json({ error: 'Registration record not found' }, { status: 404 });

@@ -111,7 +111,7 @@ export function Footer() {
                 <MapPin className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
                 <div>
                   <div className="text-slate-300 font-semibold">Training Pitch</div>
-                  <div>Chapi Meda / Chapi Stadium, Adama</div>
+                  <div>Manafesha Meda / Manafesha Meda, Adama</div>
                 </div>
               </div>
 

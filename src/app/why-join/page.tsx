@@ -137,7 +137,7 @@ export default function WhyJoinPage() {
                 {testimonial1?.title || 'Amanuel — Balancing Terminal Exams & Football'}
               </h4>
               <p className="text-slate-300 text-sm italic">
-                &quot;Before joining Nisir, I was wasting 4 hours every evening on phone games. Coach Fisha taught us that our real match begins in the classroom. Today I maintain a 92% average while captaining our youth squad at Chapi Stadium.&quot;
+                &quot;Before joining Nisir, I was wasting 4 hours every evening on phone games. Coach Fisha taught us that our real match begins in the classroom. Today I maintain a 92% average while captaining our youth squad at Manafesha Meda.&quot;
               </p>
             </div>
 

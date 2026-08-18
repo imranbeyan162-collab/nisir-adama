@@ -1,30 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getDb, saveDb } from '@/lib/blobDb';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
-
-const globalStore = globalThis as unknown as {
-  __nisir_admin_passwords?: Record<string, string>;
-};
-
-if (!globalStore.__nisir_admin_passwords) {
-  globalStore.__nisir_admin_passwords = {};
-}
 
 export async function POST(req: NextRequest) {
   try {
     const { username, currentPassword, newPassword } = await req.json();
 
-    if (!username || !newPassword) {
+    if (!newPassword) {
       return NextResponse.json(
-        { error: 'Username and new password are required' },
+        { error: 'New password is required' },
         { status: 400 }
       );
     }
 
-    const cleanUser = username.trim().toLowerCase();
     const cleanNewPass = newPassword.trim();
-
     if (cleanNewPass.length < 4) {
       return NextResponse.json(
         { error: 'Password must be at least 4 characters long' },
@@ -32,34 +23,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Store in global memory store for instant serverless availability
-    if (!globalStore.__nisir_admin_passwords) globalStore.__nisir_admin_passwords = {};
-    globalStore.__nisir_admin_passwords[cleanUser] = cleanNewPass;
-    globalStore.__nisir_admin_passwords['admin'] = cleanNewPass;
-    globalStore.__nisir_admin_passwords['coach'] = cleanNewPass;
-    globalStore.__nisir_admin_passwords['fisha'] = cleanNewPass;
+    // 1. Save permanently to Vercel Blob Database
+    await saveDb({ adminPassword: cleanNewPass });
 
-    // 2. Attempt DB write if available
+    // 2. Attempt Prisma update if database is active
     try {
+      const cleanUser = (username || 'admin').trim().toLowerCase();
       await prisma.adminUser.upsert({
         where: { username: cleanUser },
-        update: {
-          passwordHash: cleanNewPass,
-        },
+        update: { passwordHash: cleanNewPass },
         create: {
           username: cleanUser,
           passwordHash: cleanNewPass,
-          fullName: cleanUser === 'coach' ? 'Coach Fiseha Welde Meskel' : 'Academy Administrator',
-          role: cleanUser === 'coach' ? 'COACH' : 'ADMIN',
+          fullName: 'Coach Fiseha Welde Meskel',
+          role: 'COACH',
         },
       });
     } catch (dbErr) {
-      console.warn('DB password update bypassed, saved to memory store:', dbErr);
+      // Prisma fallback
     }
 
     return NextResponse.json({
       success: true,
-      message: `Password updated successfully for ${cleanUser}`,
+      message: 'Password updated permanently. You can now use it to log in.',
     });
   } catch (error: any) {
     console.error('Password update error:', error);

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getDb } from '@/lib/blobDb';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -16,48 +17,44 @@ export async function POST(req: NextRequest) {
 
     const cleanUser = username.trim().toLowerCase();
     const cleanPass = password.trim();
-    const envPass = process.env.ADMIN_PASSWORD || 'fisha weldemeskel';
-    const globalStore = globalThis as unknown as {
-      __nisir_admin_passwords?: Record<string, string>;
-    };
-    const memPass = globalStore.__nisir_admin_passwords?.[cleanUser] || globalStore.__nisir_admin_passwords?.['admin'];
 
-    // Check built-in fallback admin credentials or updated password
+    // Fetch permanent DB state
+    const db = await getDb();
+    const currentAdminPass = db.adminPassword || 'fisha weldemeskel';
+
+    // Verify credentials
     const isCoachDefault =
       (cleanUser === 'coach' || cleanUser === 'fisha' || cleanUser === 'admin') &&
-      (cleanPass.toLowerCase() === 'fisha weldemeskel' ||
-        cleanPass === envPass ||
-        cleanPass === 'admin' ||
-        cleanPass === 'coach' ||
-        cleanPass === memPass);
+      (cleanPass === currentAdminPass ||
+        cleanPass.toLowerCase() === currentAdminPass.toLowerCase() ||
+        cleanPass.toLowerCase() === 'fisha weldemeskel');
 
-    let dbUser: any = null;
+    let isDbMatch = false;
     try {
-      dbUser = await prisma.adminUser.findFirst({
-        where: {
-          username: cleanUser,
-        },
+      const dbUser = await prisma.adminUser.findFirst({
+        where: { username: cleanUser },
       });
-    } catch (dbErr) {
-      console.warn('Database lookup bypassed (running in serverless fallback mode):', dbErr);
+      if (dbUser && (dbUser.passwordHash === cleanPass || dbUser.passwordHash === cleanPass.toLowerCase())) {
+        isDbMatch = true;
+      }
+    } catch (err) {
+      // Prisma fallback
     }
-
-    const isDbMatch = dbUser && (dbUser.passwordHash === cleanPass || dbUser.passwordHash === cleanPass.toLowerCase());
 
     if (isDbMatch || isCoachDefault) {
       return NextResponse.json({
         success: true,
         user: {
-          username: dbUser?.username || cleanUser,
-          fullName: dbUser?.fullName || 'Coach Fiseha Welde Meskel',
-          role: dbUser?.role || 'COACH',
+          username: cleanUser,
+          fullName: 'Coach Fiseha Welde Meskel',
+          role: 'COACH',
         },
         token: `session_${Date.now()}_${cleanUser}`,
       });
     }
 
     return NextResponse.json(
-      { error: 'Invalid credentials. Password is: fisha weldemeskel' },
+      { error: 'Invalid username or password. Please check your credentials.' },
       { status: 401 }
     );
   } catch (error: any) {

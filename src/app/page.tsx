@@ -68,7 +68,7 @@ export default function HomePage() {
     {
       label: t('home.stats.founded'),
       value: '2013 E.C.',
-      sub: 'Chapi Stadium, Adama',
+      sub: 'Manafesha Meda, Adama',
       icon: Calendar,
       color: 'text-purple-400',
       bg: 'bg-purple-400/10',
@@ -243,7 +243,7 @@ export default function HomePage() {
             &quot;A Better Dream for a Better Life&quot;
           </h3>
           <p className="text-slate-900 font-semibold text-xs sm:text-sm">
-            Strict academics • Elite football training • Brotherhood at Chapi Stadium
+            Strict academics • Elite football training • Brotherhood at Manafesha Meda
           </p>
         </div>
       </section>
@@ -253,7 +253,7 @@ export default function HomePage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
-              Chapi Stadium Action
+              Manafesha Meda Action
             </span>
             <h2 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tight">
               {t('home.featured_video_title')}
