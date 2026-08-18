@@ -232,6 +232,17 @@ export default function AdminPage() {
     }
   };
 
+  const DUMMY_TITLES = [
+    'Manafesha Meda Championship Match',
+    'Chapi Stadium Championship Match',
+    'Morning Training at Manafesha Meda',
+    'Tactical Ball Mastery Drills',
+    'COVID-Era Distance Training (2013 E.C.)',
+    'Annual Trophy Presentation Ceremony',
+    'Coach Fisha Strategy Briefing',
+    'Youth Striker Shooting Practice',
+  ];
+
   // Fetch Gallery Items with dual client-server persistence
   const fetchGallery = async () => {
     // 1. Instant load from localStorage
@@ -240,7 +251,9 @@ export default function AdminPage() {
       const localItems = JSON.parse(localStorage.getItem('nisir_gallery_store') || '[]');
       const deletedSet = new Set(localDeleted);
       if (localItems.length > 0) {
-        setGalleryItems(localItems.filter((i: any) => !deletedSet.has(i.id)));
+        setGalleryItems(
+          localItems.filter((i: any) => !deletedSet.has(i.id) && !DUMMY_TITLES.includes(i.title) && i.id !== 'init_item_1' && i.id !== 'init_item_2')
+        );
       }
     }
 
@@ -252,18 +265,12 @@ export default function AdminPage() {
       const res = await fetch('/api/admin/gallery?type=ALL', { cache: 'no-store' });
       const data = await res.json();
       if (data?.items) {
-        const serverItems = data.items.filter((i: any) => !deletedSet.has(i.id));
-        const mergedMap = new Map();
-        localItems.forEach((i: any) => {
-          if (!deletedSet.has(i.id)) mergedMap.set(i.id, i);
-        });
-        serverItems.forEach((i: any) => {
-          if (!deletedSet.has(i.id)) mergedMap.set(i.id, i);
-        });
-        const finalItems = Array.from(mergedMap.values());
-        setGalleryItems(finalItems);
+        const serverItems = data.items.filter(
+          (i: any) => !deletedSet.has(i.id) && !DUMMY_TITLES.includes(i.title) && i.id !== 'init_item_1' && i.id !== 'init_item_2'
+        );
+        setGalleryItems(serverItems);
         if (typeof window !== 'undefined') {
-          localStorage.setItem('nisir_gallery_store', JSON.stringify(finalItems));
+          localStorage.setItem('nisir_gallery_store', JSON.stringify(serverItems));
         }
       }
     } catch (err) {

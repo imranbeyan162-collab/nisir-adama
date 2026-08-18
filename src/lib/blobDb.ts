@@ -29,29 +29,8 @@ export interface NisirDbSchema {
 
 const DEFAULT_DB: NisirDbSchema = {
   adminPassword: 'fisha weldemeskel',
-  galleryItems: [
-    {
-      id: 'init_item_1',
-      title: 'Morning Training at Manafesha Meda',
-      description: 'Tactical drills, agility work, and team spirit.',
-      mediaType: 'photo',
-      mediaUrl: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?q=80&w=1200&auto=format&fit=crop',
-      thumbnail: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?q=80&w=600&auto=format&fit=crop',
-      category: 'Training',
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: 'init_item_2',
-      title: 'U15 Championship Match',
-      description: 'Nisir Academy championship match action.',
-      mediaType: 'photo',
-      mediaUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1200&auto=format&fit=crop',
-      thumbnail: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=600&auto=format&fit=crop',
-      category: 'Match',
-      createdAt: new Date().toISOString(),
-    },
-  ],
-  deletedGalleryIds: [],
+  galleryItems: [],
+  deletedGalleryIds: ['init_item_1', 'init_item_2'],
   pageMedia: {
     coach_profile_main: {
       id: 'pm_coach',

@@ -4,42 +4,34 @@ import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
+const DUMMY_TITLES = [
+  'Manafesha Meda Championship Match',
+  'Chapi Stadium Championship Match',
+  'Morning Training at Manafesha Meda',
+  'Tactical Ball Mastery Drills',
+  'COVID-Era Distance Training (2013 E.C.)',
+  'Annual Trophy Presentation Ceremony',
+  'Coach Fisha Strategy Briefing',
+  'Youth Striker Shooting Practice',
+];
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const category = searchParams.get('category');
     const mediaType = searchParams.get('type');
 
-    // 1. Fetch from permanent Vercel Blob Database
+    // 1. Fetch from permanent Vercel Blob Database (Single Source of Truth)
     const db = await getDb();
-    let items = db.galleryItems || [];
-    const deletedSet = new Set(db.deletedGalleryIds || []);
-
-    // Filter out deleted items
-    items = items.filter((item) => item && !deletedSet.has(item.id));
-
-    // Try merging any Prisma items if available
-    try {
-      let whereClause: any = {};
-      if (category && category !== 'ALL') whereClause.category = category;
-      if (mediaType && mediaType !== 'ALL') whereClause.mediaType = mediaType;
-
-      const dbItems = await prisma.galleryItem.findMany({
-        where: whereClause,
-        orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
-      });
-
-      const uniqueMap = new Map();
-      items.forEach((i) => uniqueMap.set(i.id, i));
-      dbItems.forEach((i) => {
-        if (!deletedSet.has(i.id) && !uniqueMap.has(i.id)) {
-          uniqueMap.set(i.id, i);
-        }
-      });
-      items = Array.from(uniqueMap.values()) as GalleryItemData[];
-    } catch (err) {
-      // Prisma fallback
-    }
+    let items = (db.galleryItems || []).filter((item) => {
+      if (!item) return false;
+      // Filter out dummy items
+      if (DUMMY_TITLES.includes(item.title)) return false;
+      if (item.id === 'init_item_1' || item.id === 'init_item_2') return false;
+      // Filter out deleted items
+      if (db.deletedGalleryIds && db.deletedGalleryIds.includes(item.id)) return false;
+      return true;
+    });
 
     if (category && category !== 'ALL') {
       items = items.filter((i) => i.category === category);
@@ -88,11 +80,11 @@ export async function POST(req: NextRequest) {
 
     // 1. Save permanently to Vercel Blob Database
     const db = await getDb();
-    const currentItems = (db.galleryItems || []).filter((i) => i.id !== newItem.id);
+    const currentItems = (db.galleryItems || []).filter((i) => i.id !== newItem.id && !DUMMY_TITLES.includes(i.title));
     currentItems.unshift(newItem);
     await saveDb({ galleryItems: currentItems });
 
-    // 2. Prisma sync
+    // 2. Prisma sync (optional secondary cache)
     try {
       await prisma.galleryItem.create({
         data: {
@@ -126,22 +118,26 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Gallery item ID is required' }, { status: 400 });
     }
 
-    // 1. Delete permanently in Vercel Blob Database
+    // 1. Delete permanently from Vercel Blob Database
     const db = await getDb();
-    const updatedItems = (db.galleryItems || []).filter((i) => i.id !== id);
-    const deletedIds = Array.from(new Set([...(db.deletedGalleryIds || []), id]));
+    const updatedItems = (db.galleryItems || []).filter(
+      (i) => i.id !== id && i.id !== decodeURIComponent(id) && !DUMMY_TITLES.includes(i.title)
+    );
+    const deletedIds = Array.from(new Set([...(db.deletedGalleryIds || []), id, decodeURIComponent(id)]));
     await saveDb({ galleryItems: updatedItems, deletedGalleryIds: deletedIds });
 
     // 2. Prisma delete
     try {
-      await prisma.galleryItem.delete({
-        where: { id },
+      await prisma.galleryItem.deleteMany({
+        where: {
+          OR: [{ id }, { id: decodeURIComponent(id) }],
+        },
       });
     } catch (dbErr) {
       // Prisma fallback
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, remaining: updatedItems.length });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
