@@ -232,22 +232,67 @@ export default function AdminPage() {
     }
   };
 
-  // Fetch Gallery Items
+  // Fetch Gallery Items with dual client-server persistence
   const fetchGallery = async () => {
+    // 1. Instant load from localStorage
+    if (typeof window !== 'undefined') {
+      const localDeleted = JSON.parse(localStorage.getItem('nisir_deleted_ids') || '[]');
+      const localItems = JSON.parse(localStorage.getItem('nisir_gallery_store') || '[]');
+      const deletedSet = new Set(localDeleted);
+      if (localItems.length > 0) {
+        setGalleryItems(localItems.filter((i: any) => !deletedSet.has(i.id)));
+      }
+    }
+
     try {
-      const res = await fetch('/api/admin/gallery?type=ALL');
+      const localDeleted = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('nisir_deleted_ids') || '[]') : [];
+      const localItems = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('nisir_gallery_store') || '[]') : [];
+      const deletedSet = new Set(localDeleted);
+
+      const res = await fetch('/api/admin/gallery?type=ALL', { cache: 'no-store' });
       const data = await res.json();
       if (data?.items) {
-        setGalleryItems(data.items);
+        const serverItems = data.items.filter((i: any) => !deletedSet.has(i.id));
+        const mergedMap = new Map();
+        localItems.forEach((i: any) => {
+          if (!deletedSet.has(i.id)) mergedMap.set(i.id, i);
+        });
+        serverItems.forEach((i: any) => {
+          if (!deletedSet.has(i.id)) mergedMap.set(i.id, i);
+        });
+        const finalItems = Array.from(mergedMap.values());
+        setGalleryItems(finalItems);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('nisir_gallery_store', JSON.stringify(finalItems));
+        }
       }
     } catch (err) {
       console.error(err);
     }
   };
 
-  // Create Gallery Item
+  // Create Gallery Item permanently
   const handleCreateGalleryItem = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!galleryForm.title || !galleryForm.mediaUrl) {
+      alert('Please provide a title and media file/URL.');
+      return;
+    }
+
+    const localItem = {
+      ...galleryForm,
+      id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Save to local storage immediately
+    if (typeof window !== 'undefined') {
+      const existing = JSON.parse(localStorage.getItem('nisir_gallery_store') || '[]');
+      const updated = [localItem, ...existing];
+      localStorage.setItem('nisir_gallery_store', JSON.stringify(updated));
+      setGalleryItems(updated);
+    }
+
     try {
       const res = await fetch('/api/admin/gallery', {
         method: 'POST',
@@ -255,30 +300,50 @@ export default function AdminPage() {
         body: JSON.stringify(galleryForm),
       });
       if (res.ok) {
-        setNewGalleryModal(false);
-        setGalleryForm({
-          title: '',
-          description: '',
-          mediaType: 'photo',
-          mediaUrl: '',
-          videoUrl: '',
-          thumbnail: '',
-          category: 'Match',
-          featured: false,
-        });
-        fetchGallery();
+        const data = await res.json();
+        if (data?.item && typeof window !== 'undefined') {
+          const existing = JSON.parse(localStorage.getItem('nisir_gallery_store') || '[]');
+          const synced = existing.map((i: any) => (i.id === localItem.id ? data.item : i));
+          localStorage.setItem('nisir_gallery_store', JSON.stringify(synced));
+          setGalleryItems(synced);
+        }
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setNewGalleryModal(false);
+      setGalleryForm({
+        title: '',
+        description: '',
+        mediaType: 'photo',
+        mediaUrl: '',
+        videoUrl: '',
+        thumbnail: '',
+        category: 'Match',
+        featured: false,
+      });
     }
   };
 
-  // Delete Gallery Item
+  // Delete Gallery Item permanently
   const handleDeleteGalleryItem = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this media item?')) return;
+    if (!confirm('Are you sure you want to permanently delete this media item?')) return;
+
+    // 1. Immediately delete from localStorage and mark as deleted
+    if (typeof window !== 'undefined') {
+      const localDeleted = JSON.parse(localStorage.getItem('nisir_deleted_ids') || '[]');
+      localDeleted.push(id);
+      localStorage.setItem('nisir_deleted_ids', JSON.stringify(localDeleted));
+
+      const existing = JSON.parse(localStorage.getItem('nisir_gallery_store') || '[]');
+      const updated = existing.filter((i: any) => i.id !== id);
+      localStorage.setItem('nisir_gallery_store', JSON.stringify(updated));
+      setGalleryItems(updated);
+    }
+
+    // 2. Delete on server
     try {
-      const res = await fetch(`/api/admin/gallery?id=${id}`, { method: 'DELETE' });
-      if (res.ok) fetchGallery();
+      await fetch(`/api/admin/gallery?id=${id}`, { method: 'DELETE' });
     } catch (err) {
       console.error(err);
     }

@@ -22,16 +22,40 @@ export default function GalleryPage() {
   const [selectedMedia, setSelectedMedia] = useState<any | null>(null);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const localDeleted = JSON.parse(localStorage.getItem('nisir_deleted_ids') || '[]');
+      const localItems = JSON.parse(localStorage.getItem('nisir_gallery_store') || '[]');
+      const deletedSet = new Set(localDeleted);
+      if (localItems.length > 0) {
+        setItems(localItems.filter((i: any) => !deletedSet.has(i.id)));
+        setLoading(false);
+      }
+    }
     fetchGallery();
   }, []);
 
   const fetchGallery = async () => {
     try {
-      setLoading(true);
-      const res = await fetch('/api/admin/gallery?type=ALL');
+      const localDeleted = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('nisir_deleted_ids') || '[]') : [];
+      const localItems = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('nisir_gallery_store') || '[]') : [];
+      const deletedSet = new Set(localDeleted);
+
+      const res = await fetch('/api/admin/gallery?type=ALL', { cache: 'no-store' });
       const data = await res.json();
       if (data?.items) {
-        setItems(data.items);
+        const serverItems = data.items.filter((i: any) => !deletedSet.has(i.id));
+        const mergedMap = new Map();
+        localItems.forEach((i: any) => {
+          if (!deletedSet.has(i.id)) mergedMap.set(i.id, i);
+        });
+        serverItems.forEach((i: any) => {
+          if (!deletedSet.has(i.id)) mergedMap.set(i.id, i);
+        });
+        const finalItems = Array.from(mergedMap.values());
+        setItems(finalItems);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('nisir_gallery_store', JSON.stringify(finalItems));
+        }
       }
     } catch (err) {
       console.error(err);
