@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { upload } from '@vercel/blob/client';
 import { useLanguage } from '@/lib/i18n';
 import {
   Shield,
@@ -345,14 +346,51 @@ export default function AdminPage() {
     return clean;
   };
 
-  // Universal Media File Upload Helper for CMS & Gallery
+  // Universal Media File Upload Helper for CMS & Gallery (Direct Cloud Streaming)
   const handleDirectUpload = async (file: File, callback: (url: string) => void) => {
     setIsUploadingMedia(true);
     setMediaUploadError('');
-    const formData = new FormData();
-    formData.append('file', file);
+
+    // 1. Priority 1: Direct Client-to-Vercel-Blob Streaming (Bypasses 4.5MB Serverless Payload Limit, supports up to 500MB!)
     try {
+      const newBlob = await upload(file.name, file, {
+        access: 'public',
+        handleUploadUrl: '/api/blob/upload',
+      });
+      if (newBlob?.url) {
+        callback(newBlob.url);
+        setIsUploadingMedia(false);
+        return;
+      }
+    } catch (clientBlobErr: any) {
+      console.warn('Direct client blob upload fallback:', clientBlobErr?.message || clientBlobErr);
+    }
+
+    // 2. Priority 2: Fallback to /api/upload with safe non-JSON error handling
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        let errorMsg = 'Upload failed.';
+        try {
+          const parsed = JSON.parse(errorText);
+          errorMsg = parsed.error || errorMsg;
+        } catch {
+          if (res.status === 413 || errorText.includes('Too Large')) {
+            errorMsg = 'File is too large for standard serverless gateway. Please ensure your Vercel Blob store is active for direct streaming.';
+          } else {
+            errorMsg = errorText || `Server error (${res.status})`;
+          }
+        }
+        setMediaUploadError(errorMsg);
+        setIsUploadingMedia(false);
+        return;
+      }
+
       const data = await res.json();
       if (data?.url) {
         callback(data.url);

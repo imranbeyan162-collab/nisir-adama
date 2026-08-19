@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { upload } from '@vercel/blob/client';
 import Link from 'next/link';
 import { useLanguage } from '@/lib/i18n';
 import {
@@ -108,7 +109,7 @@ export default function RegisterPage() {
     setPlayers(updated);
   };
 
-  // Handle Photo Upload with Instant Local Preview & Server Upload
+  // Handle Photo Upload with Instant Local Preview & Direct Cloud Streaming
   const handlePhotoUpload = async (index: number, file: File) => {
     // 1. Instant local preview
     const reader = new FileReader();
@@ -119,25 +120,40 @@ export default function RegisterPage() {
     };
     reader.readAsDataURL(file);
 
-    // 2. Upload to server (Vercel Blob or local)
-    const formData = new FormData();
-    formData.append('file', file);
-
+    // 2. Priority 1: Direct Vercel Blob Client Upload
     try {
+      const newBlob = await upload(file.name, file, {
+        access: 'public',
+        handleUploadUrl: '/api/blob/upload',
+      });
+      if (newBlob?.url) {
+        handlePlayerChange(index, 'playerPhotoUrl', newBlob.url);
+        return;
+      }
+    } catch (clientErr) {
+      console.warn('Direct blob client upload fallback:', clientErr);
+    }
+
+    // 3. Priority 2: Fallback to /api/upload
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
       const res = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
-      const data = await res.json();
-      if (data?.url) {
-        handlePlayerChange(index, 'playerPhotoUrl', data.url);
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.url) {
+          handlePlayerChange(index, 'playerPhotoUrl', data.url);
+        }
       }
     } catch (err) {
       console.warn('Photo upload server fallback active:', err);
     }
   };
 
-  // Handle Receipt Upload with Instant Local Preview & Server Upload
+  // Handle Receipt Upload with Instant Local Preview & Direct Cloud Streaming
   const handleReceiptUpload = async (file: File) => {
     // 1. Instant local preview
     const reader = new FileReader();
@@ -148,18 +164,33 @@ export default function RegisterPage() {
     };
     reader.readAsDataURL(file);
 
-    // 2. Upload to server (Vercel Blob or local)
-    const formData = new FormData();
-    formData.append('file', file);
-
+    // 2. Priority 1: Direct Vercel Blob Client Upload
     try {
+      const newBlob = await upload(file.name, file, {
+        access: 'public',
+        handleUploadUrl: '/api/blob/upload',
+      });
+      if (newBlob?.url) {
+        setReceiptUrl(newBlob.url);
+        return;
+      }
+    } catch (clientErr) {
+      console.warn('Direct blob client upload fallback:', clientErr);
+    }
+
+    // 3. Priority 2: Fallback to /api/upload
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
       const res = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
-      const data = await res.json();
-      if (data?.url) {
-        setReceiptUrl(data.url);
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.url) {
+          setReceiptUrl(data.url);
+        }
       }
     } catch (err) {
       console.warn('Receipt upload server fallback active:', err);

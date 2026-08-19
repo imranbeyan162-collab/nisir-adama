@@ -107,6 +107,12 @@
       "namedRegex": "^/api/admin/settings(?:/)?$"
     },
     {
+      "page": "/api/blob/upload",
+      "regex": "^/api/blob/upload(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/blob/upload(?:/)?$"
+    },
+    {
       "page": "/api/contact",
       "regex": "^/api/contact(?:/)?$",
       "routeKeys": {},
